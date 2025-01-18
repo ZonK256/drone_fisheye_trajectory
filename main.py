@@ -1,23 +1,51 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import socket
+import argparse
 
 # puścić liczenie
 # 9 macierzy markowa 3x3 wyświetlone jako obrazki z gradientem kolorów reprezentującym częstość występowania danego stanu
 
 
+# Argument parser
+parser = argparse.ArgumentParser(description="Fisheye trajectory simulation")
+parser.add_argument(
+    "--velocity_vector",
+    type=int,
+    nargs=2,
+    default=None,
+    help="Specify the velocity vector as two integers, e.g., --velocity_vector 1 2",
+)
+
 # Parametry
 Rpix = 200  # promień kamery w pikselach
-znany_max_pix_velocity = 2  # to jest wyznaczane na podstawie max_pix_velocity
-
 MAX_TRAJECTORIES = 10000  # Maksymalna liczba trajektorii
-MAX_SEGMENTS_PER_TRAJECTORY = 50  # Maksymalna liczba segmentów na trajektorii
+
+znany_max_pix_velocity = 1  # to jest wyznaczane na podstawie max_pix_velocity
+# 1.4.... najwyższa prędkość dla wektora 1,1
+
+MAX_SEGMENTS_PER_TRAJECTORY = 2000  # Maksymalna liczba segmentów na trajektorii
+# 2000 wyglądana wystarczająco dla pix_velocity 1
 
 # Parametry bryły
 radius = 1000  # Promień cylindra i stożka
 height = 1000  # Wysokość cylindra i stożka
 # cone_height = 1000  # Wysokość stożka
 cone_bottom_radius = 100  # Promień podstawy stożka (na dole)
+
+OUTPUT_MATRIX_SIZE = 1000  # Rozmiar macierzy wyjściowej x i y
+
+
+args = parser.parse_args()
+
+if args.velocity_vector:
+    wektory2D = [args.velocity_vector]
+else:
+    # Generowanie wektorów 2D
+    wektory2D = []
+    for v1 in range(-znany_max_pix_velocity, znany_max_pix_velocity + 1):
+        for v2 in range(-znany_max_pix_velocity, znany_max_pix_velocity + 1):
+            wektory2D.append([v1, v2])
 
 
 # Funkcja do zapisania stanu generatora do pliku (lub pamięci)
@@ -36,13 +64,13 @@ def load_rng_state(filepath):
 
 rng = np.random.default_rng(seed=42)
 # sprawdź czy jest zapisany stan generatora
-try:
-    rng = load_rng_state("rng_state.npy")
-    print("Loaded rng state from file")
-except FileNotFoundError:
-    print("No rng state file found, generating new rng state")
-    IP_STR = socket.gethostbyname(socket.gethostname())
-    rng = np.random.default_rng(seed=int(IP_STR.replace(".", "")))
+# try:
+#     rng = load_rng_state("rng_state.npy")
+#     print("Loaded rng state from file")
+# except FileNotFoundError:
+#     print("No rng state file found, generating new rng state")
+#     IP_STR = socket.gethostbyname(socket.gethostname())
+#     rng = np.random.default_rng(seed=int(IP_STR.replace(".", "")))
 
 # np.random.seed(int(IP_STR.replace(".", "")))  # Seed do losowania trajektorii
 
@@ -66,12 +94,6 @@ def fisheye_trajectory(xyz_trajectory: np.array) -> np.array:
     Py = r_norm * np.sin(az)
     return np.column_stack((Px, Py))
 
-
-# Generowanie wektorów 2D
-wektory2D = []
-for v1 in range(-znany_max_pix_velocity, znany_max_pix_velocity + 1):
-    for v2 in range(-znany_max_pix_velocity, znany_max_pix_velocity + 1):
-        wektory2D.append([v1, v2])
 
 # Trajektorie
 plt.figure(1)
@@ -108,6 +130,7 @@ def is_outside_area(xyz) -> bool:
     return False
 
 
+output_matrix = np.zeros((OUTPUT_MATRIX_SIZE, OUTPUT_MATRIX_SIZE))
 max_trajectory_length = 0
 for _ in range(MAX_TRAJECTORIES):
 
@@ -118,12 +141,13 @@ for _ in range(MAX_TRAJECTORIES):
     )  # nie losuj z całej wysokości, dla granicznych przypadków następuje nieprawidłowe zachowanie
 
     # losuj koordynaty na obwodzie okręgu
-    point_angle = rng.random() * np.pi * 0.25  # losuj kąt 0-45*
+    point_angle = rng.random() * np.pi * 2
     xyzT[0] = [
         radius * np.cos(point_angle),
         radius * np.sin(point_angle),
         z,
     ]
+
     trajectory_x, trajectory_y = wektory2D[rng.integers(0, len(wektory2D))]
 
     for i in range(1, MAX_SEGMENTS_PER_TRAJECTORY):
@@ -141,24 +165,25 @@ for _ in range(MAX_TRAJECTORIES):
     # print(xyzT)
     max_trajectory_length = max(max_trajectory_length, len(xyzT))
 
-    if len(xyzT) > 400:
-        print(f"{len(xyzT)} -> {xyzT[-10:]}\n")
+    # if len(xyzT) > 400:
+    #     print(f"{len(xyzT)} -> {xyzT[-10:]}\n")
 
     # Projekcja do kamery fisheye
     fT = fisheye_trajectory(xyzT)
-    plt.plot(fT[:, 0], fT[:, 1])
+    # plt.plot(fT[:, 0], fT[:, 1])
 
     ft_int = np.round(fT * Rpix).astype(int)
 
     # Obliczenie maksymalnej prędkości w pikselach
     velocity_vector = np.sqrt(np.sum(np.diff(ft_int, axis=0) ** 2, axis=1))
     # print(f"current velocity: {velocity_vector.max()}")
-    max_pix_velocity = max(max_pix_velocity, velocity_vector.max())
+    if len(velocity_vector) > 0:
+        max_pix_velocity = max(max_pix_velocity, velocity_vector.max())
 
-print(f"rng_state: {rng.bit_generator.state}")
+# print(f"rng_state: {rng.bit_generator.state}")
 save_rng_state(rng, "rng_state.npy")
 
-print(f"total_max_pix_velocity: {max_pix_velocity}")
+# print(f"total_max_pix_velocity: {max_pix_velocity}")
 print(f"max_trajectory_length: {max_trajectory_length}")
 
 print(
