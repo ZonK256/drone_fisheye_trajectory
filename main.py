@@ -29,6 +29,12 @@ parser.add_argument(
     default=10000,
     help="Number of trajectories to generate, (default: 10000, if 0 then infinite)",
 )
+parser.add_argument(
+    "--additional_seed",
+    type=int,
+    default=0,
+    help="Additional seed for random number generator, for multiple runs with the same velocity vector",
+)
 
 ### PARAMETRY ###
 Rpix = 1000  # promień kamery w pikselach
@@ -66,8 +72,10 @@ max_trajectories = 0 if args.max_trajectories < 0 else args.max_trajectories
 file_suffix = (
     "random"
     if args.velocity_vector is None
-    else f"{args.velocity_vector[0]}_{args.velocity_vector[1]}"
+    else f"{args.velocity_vector[0]}.{args.velocity_vector[1]}"
 )
+if args.additional_seed:
+    file_suffix += f"_{args.additional_seed}"
 
 
 # Funkcja do zapisania stanu generatora do pliku (lub pamięci)
@@ -209,9 +217,9 @@ def generate_trajectories_chunk(iterations=AUTOSAVE_INTERVAL):
 def autosave_progress():
 
     # zapisz stan generatora
-    save_rng_state(rng, f"rng_state_{file_suffix}.npy")
+    save_rng_state(rng, f"rng_{file_suffix}.npy")
     # zapisz macierz wyjściową
-    np.save(f"output_matrix_{file_suffix}.npy", output_matrix)
+    np.save(f"matrix_{file_suffix}.npy", output_matrix)
 
 
 def generate_trajectories() -> np.array:
@@ -226,7 +234,7 @@ def generate_trajectories() -> np.array:
             generate_trajectories_chunk()
             autosave_progress()
             print(
-                f"Calculated {i * AUTOSAVE_INTERVAL} trajectories in {(time.time() - start_time):.2f} seconds"
+                f"Calculated {(i * AUTOSAVE_INTERVAL):_} trajectories in {(time.time() - start_time):.2f} seconds"
             )
             i += 1
 
@@ -261,18 +269,20 @@ def generate_trajectories() -> np.array:
 def load_or_initialize():
     global output_matrix, rng
     try:
-        output_matrix = np.load(f"output_matrix_{file_suffix}.npy")
+        output_matrix = np.load(f"matrix_{file_suffix}.npy")
         print("Loaded output matrix from file")
     except FileNotFoundError:
         print("No output matrix file found, initializing new output matrix")
 
     try:
-        rng = load_rng_state(f"rng_state_{file_suffix}.npy")
+        rng = load_rng_state(f"rng_{file_suffix}.npy")
         print("Loaded rng state from file")
     except FileNotFoundError:
         print("No rng state file found, generating new rng state")
         IP_STR = socket.gethostbyname(socket.gethostname())
-        rng = np.random.default_rng(seed=int(IP_STR.replace(".", "")))
+        rng = np.random.default_rng(
+            seed=int(IP_STR.replace(".", "")) + args.additional_seed
+        )
 
 
 def run_test_mode():
