@@ -28,4 +28,4 @@ if __name__ == "__main__":
                 os.system(
                     command.format(screen_name, vector, trajecotries_per_instance, seed)
                 )
-            os.system(f"sleep {secs_to_sleep}")
+        os.system(f"sleep {secs_to_sleep}")
