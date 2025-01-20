@@ -4,7 +4,8 @@ import os
 
 vectors = ["-1.-1", "-1.0", "-1.1", "0.-1", "random", "0.1", "1.-1", "1.0", "1.1"]
 
-matrix_files = [f for f in os.listdir() if "output_matrix" in f]
+matrix_files = [f for f in os.listdir() if "matrix" in f]
+print(matrix_files)
 
 for vector in vectors:
     # find all files with current vector
@@ -26,7 +27,7 @@ for vector in vectors:
     Rpix = matrix.shape[0] // 2
 
     plt.figure()
-    plt.title(f"{vector.replace('_', ' ')} vector (Rpix={Rpix})")
+    plt.title(f"[{vector.replace('.', ' ')}] vector (Rpix={Rpix})")
     plt.axis("equal")
     plt.imshow(matrix, cmap="hot")
     plt.colorbar()

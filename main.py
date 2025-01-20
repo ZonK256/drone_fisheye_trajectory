@@ -324,7 +324,7 @@ if __name__ == "__main__":
     if args.test_mode:
         run_test_mode()
     else:
-        plt.axis("equal")
-        plt.grid()
+        # plt.axis("equal")
+        # plt.grid()
         generate_trajectories()
-        plt.show()
+        # plt.show()
