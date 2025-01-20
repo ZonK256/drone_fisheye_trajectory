@@ -194,9 +194,6 @@ def generate_trajectory() -> np.array:
     return xyzT
 
 
-output_matrix = np.zeros((Rpix * 2 + 1, Rpix * 2 + 1), dtype=int)
-
-
 def generate_trajectories_chunk(iterations=AUTOSAVE_INTERVAL):
     global output_matrix
 
@@ -273,6 +270,7 @@ def load_or_initialize():
         print("Loaded output matrix from file")
     except FileNotFoundError:
         print("No output matrix file found, initializing new output matrix")
+        output_matrix = np.zeros((Rpix * 2 + 1, Rpix * 2 + 1), dtype=int)
 
     try:
         rng = load_rng_state(f"rng_{file_suffix}.npy")
