@@ -9,12 +9,13 @@ print(matrix_files)
 
 for vector in vectors:
     # find all files with current vector
-    matricies = [f for f in matrix_files if vector in f]
+    matricies = [f for f in matrix_files if f"matrix_{vector}" in f]
 
     if len(matricies) == 0:
         print(f"Missing matrix for {vector} vector")
         continue
 
+    print(f"Found {len(matricies)} matricies for {vector} vector: {matricies}")
     matrix = np.load(matricies[0])
     for m in matricies[1:]:
         matrix += np.load(m)
