@@ -10,7 +10,7 @@ secs_to_sleep = 60
 
 command = "screen -dmS {} python3 main.py --velocity_vector {} --max_trajectories {}  --additional_seed {}"
 random_command = (
-    "screen -dmS random python3 main.py --max_trajectories {}  --additional_seed {}"
+    "screen -dmS random{} python3 main.py --max_trajectories {}  --additional_seed {}"
 )
 
 if __name__ == "__main__":
@@ -19,11 +19,11 @@ if __name__ == "__main__":
 
         for instance in range(instances_per_vector):
             # Run random instance
+            seed = instance
             print(f" Running random instance")
-            os.system(random_command.format(trajecotries_per_instance, instance))
+            os.system(random_command.format(instance, trajecotries_per_instance, seed))
             for vector in vectors:
                 print(f" Running [{vector}] instance {instance}")
-                seed = instance
                 screen_name = f"{vector.replace(' ', '_')}_{instance}"
                 os.system(
                     command.format(screen_name, vector, trajecotries_per_instance, seed)

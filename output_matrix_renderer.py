@@ -3,18 +3,20 @@ import matplotlib.pyplot as plt
 import os
 
 vectors = ["-1.-1", "-1.0", "-1.1", "0.-1", "random", "0.1", "1.-1", "1.0", "1.1"]
+# vectors = ["-1.-1"]
 
 matrix_files = [f for f in os.listdir() if "matrix" in f]
 print(matrix_files)
 
 for vector in vectors:
     # find all files with current vector
-    matricies = [f for f in matrix_files if vector in f]
+    matricies = [f for f in matrix_files if f"matrix_{vector}" in f]
 
     if len(matricies) == 0:
         print(f"Missing matrix for {vector} vector")
         continue
 
+    print(f"Found {len(matricies)} matricies for {vector} vector: {matricies}")
     matrix = np.load(matricies[0])
     for m in matricies[1:]:
         matrix += np.load(m)
@@ -26,10 +28,16 @@ for vector in vectors:
 
     Rpix = matrix.shape[0] // 2
 
+    # if point is outside of the circle, set it to unvisible
+    for i in range(matrix.shape[0]):
+        for j in range(matrix.shape[1]):
+            if (i - Rpix) ** 2 + (j - Rpix) ** 2 > Rpix**2:
+                matrix[i, j] = np.nan
+
     plt.figure()
     plt.title(f"[{vector.replace('.', ' ')}] vector (Rpix={Rpix})")
     plt.axis("equal")
-    plt.imshow(matrix, cmap="hot")
+    plt.imshow(matrix, cmap="plasma")
     plt.colorbar()
     plt.show()
 
