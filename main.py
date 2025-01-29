@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import socket
 import argparse
 import time
+import os
+import datetime
 
 # puścić liczenie
 # 9 macierzy markowa 3x3 wyświetlone jako obrazki z gradientem kolorów reprezentującym częstość występowania danego stanu
@@ -213,10 +215,11 @@ def generate_trajectories_chunk(iterations=AUTOSAVE_INTERVAL):
 
 def autosave_progress():
 
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     # zapisz stan generatora
     save_rng_state(rng, f"rng_{file_suffix}.npy")
     # zapisz macierz wyjściową
-    np.save(f"matrix_{file_suffix}.npy", output_matrix)
+    np.save(f"matrix_{file_suffix}_{timestamp}.npy", output_matrix)
 
 
 def generate_trajectories() -> np.array:
@@ -266,9 +269,15 @@ def generate_trajectories() -> np.array:
 def load_or_initialize():
     global output_matrix, rng
     try:
-        output_matrix = np.load(f"matrix_{file_suffix}.npy")
-        print("Loaded output matrix from file")
-    except FileNotFoundError:
+        matching_files = [
+            file
+            for file in os.listdir(os.getcwd())
+            if file_suffix in file and file.endswith(".npy")
+        ]
+        latest_file = max(matching_files, key=os.path.getctime)
+        output_matrix = np.load(latest_file)
+        print(f"Loaded output matrix {latest_file}")
+    except (FileNotFoundError, ValueError):
         print("No output matrix file found, initializing new output matrix")
         output_matrix = np.zeros((Rpix * 2 + 1, Rpix * 2 + 1), dtype=int)
 
