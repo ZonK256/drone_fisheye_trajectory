@@ -247,8 +247,8 @@ def simulate_trajectory():
     y = radius * np.sin(angle)
     z = rng.uniform(0, height)
 
-    x_velocity = -1
-    y_velocity = -1
+    x_velocity = rng.uniform(-1, 1)
+    y_velocity = rng.uniform(-1, 1)
 
     new_drone_image_position = cart2fish_image(x, y, z)
     previous_drone_image_position = new_drone_image_position

@@ -3,9 +3,9 @@ import datetime
 
 # vectors = ["-1 -1", "-1 0", "-1 1", "0 -1", "0 1", "1 -1", "1 0", "1 1"]
 
-instances = 3
+instances = 20
 trajecotries_per_instance = 100_000
-secs_to_sleep = 400
+secs_to_sleep = 1400
 
 
 command = "screen -dmS {} python3 main.py --max_trajectories {} --additional_seed {}"
