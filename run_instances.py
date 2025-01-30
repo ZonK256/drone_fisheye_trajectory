@@ -17,6 +17,6 @@ if __name__ == "__main__":
         for i in range(instances):
             seed = i
             print(f" Running instance {i}")
-            screen_name = f""
+            screen_name = f"instance_{i}"
             os.system(command.format(screen_name, trajecotries_per_instance, seed))
         os.system(f"sleep {secs_to_sleep}")
