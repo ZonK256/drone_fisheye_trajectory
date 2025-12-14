@@ -2,11 +2,72 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-from main import wektory2D  # import żeby zachować zgodność z nazwami zmiennych
+from fisheye import WEKTORY2D  # import żeby zachować zgodność z nazwami zmiennych
 
-matrix_files = [f for f in os.listdir() if "matrix" in f and f.endswith(".npy")]
+trajectory = "circular"
+
+vmin = 0
+
+match trajectory:
+    case "circular":
+        XLIMS = [
+            (-2e-7, 2e-7),  # -1, -1
+            (-2e-7, 2e-7),  # -1, 0
+            (-3e-7, 3e-7),  # -1, 1
+            (-1e-7, 1e-7),  # 0, -1
+            (-5e-7, 5e-7),  # 0, 0
+            (-1e-7, 1e-7),  # 0, 1
+            (-3e-7, 3e-7),  # 1, -1
+            (-2e-7, 2e-7),  # 1, 0
+            (-2e-7, 2e-7),  # 1, 1
+        ]
+        vmax = 4e-6
+    case "scatter":
+        XLIMS = [
+            (-2e-8, 2e-8),  # -1, -1
+            (-2e-8, 2e-8),  # -1, 0
+            (-2e-8, 2e-8),  # -1, 1
+            (-2e-8, 2e-8),  # 0, -1
+            (-2e-8, 2e-8),  # 0, 0
+            (-2e-8, 2e-8),  # 0, 1
+            (-2e-8, 2e-8),  # 1, -1
+            (-2e-8, 2e-8),  # 1, 0
+            (-2e-8, 2e-8),  # 1, 1
+        ]
+        vmax = 4e-8
+    case "squiggle":
+        XLIMS = [
+            (-3e-9, 3e-9),  # -1, -1
+            (-5e-9, 5e-9),  # -1, 0
+            (-5e-9, 5e-9),  # -1, 1
+            (-5e-9, 5e-9),  # 0, -1
+            (-2e-9, 2e-9),  # 0, 0
+            (-5e-9, 5e-9),  # 0, 1
+            (-5e-9, 5e-9),  # 1, -1
+            (-5e-9, 5e-9),  # 1, 0
+            (-3e-9, 3e-9),  # 1, 1
+        ]
+        vmax = 4e-8
+    case _:  # linear
+        XLIMS = [
+            (-1e-9, 1e-9),
+            (-1e-8, 1e-8),
+            (-1e-9, 1e-9),
+            (-1e-8, 1e-8),
+            (-2e-6, 2e-6),
+            (-1e-8, 1e-8),
+            (-1e-9, 1e-9),
+            (-1e-8, 1e-8),
+            (-1e-9, 1e-9),
+        ]
+        vmax = 5e-8  # to change
+
+
+matrix_files = [
+    f for f in os.listdir() if "matrix" in f and f.endswith(f"{trajectory}.npy")
+]
 TOTAL_MATRICES = len(matrix_files)
-PLOT_STEPS = 4
+PLOT_STEPS = 1
 
 # matrix = np.zeros((9, 9, 9), dtype=np.int32)
 
@@ -21,22 +82,37 @@ PLOT_STEPS = 4
 # matrix[4, 4, 8] = 1
 
 
-def plot_matricies(matrix, title, filename):
+def plot_matricies(matrix, title="Fisheye Trajectory", filename="output.png"):
+
     fig = plt.figure(figsize=(5, 6))
     ax_array = fig.subplots(3, 3, sharex=True, sharey=True)
     Rpix = matrix.shape[0] // 2
 
-    for i, vector in enumerate(wektory2D):
+    for i, vector in enumerate(WEKTORY2D):
         sub_matrix = matrix[:, :, i]
         for x in range(sub_matrix.shape[0]):
             for y in range(sub_matrix.shape[1]):
                 if (x - Rpix) ** 2 + (y - Rpix) ** 2 > Rpix**2:
                     sub_matrix[x, y] = np.nan
 
+        # fix for plots
+        if trajectory in ["scatter", "squiggle"]:
+            if i == 4:
+                sub_matrix /= 1000
+            elif i in [1, 3, 5, 7]:
+                sub_matrix /= 10
+        elif trajectory == "circular":
+            if i == 4:
+                sub_matrix /= 4
+            elif i in [1, 3, 5, 7]:
+                sub_matrix /= 4
+
         ax_array[i // 3, i % 3].imshow(
             sub_matrix,
             cmap="plasma",
             interpolation="nearest",
+            vmin=vmin,
+            vmax=vmax,
         )
 
         ax_array[i // 3, i % 3].set_title(
@@ -46,7 +122,7 @@ def plot_matricies(matrix, title, filename):
     fig.suptitle(title, fontsize=16)
 
     cbar = fig.colorbar(
-        ax_array[2, 2].imshow(matrix[:, :, 8], cmap="plasma"),
+        ax_array[2, 2].imshow(matrix[:, :, 8], cmap="plasma", vmin=vmin, vmax=vmax),
         ax=ax_array,
         orientation="horizontal",
     )
@@ -67,27 +143,14 @@ def generate_reference_matrix() -> np.ndarray:
     for i in range(1, len(matrix_files)):
         matrix += np.load(matrix_files[i])
 
-        sum_matrix = np.sum(matrix)
-        reference_matricies = np.zeros(matrix.shape, dtype=np.float32)
-        reference_matricies = matrix / sum_matrix
+    sum_matrix = np.sum(matrix)
+    reference_matricies = np.zeros(matrix.shape, dtype=np.float32)
+    reference_matricies = matrix / sum_matrix
 
     print(
         f"Summed up {TOTAL_MATRICES} matrices for reference, total sum: {sum_matrix:_}"
     )
     return reference_matricies
-
-
-XLIMS = [
-    (-1e-9, 1e-9),
-    (-1e-8, 1e-8),
-    (-1e-9, 1e-9),
-    (-1e-8, 1e-8),
-    (-2e-6, 2e-6),
-    (-1e-8, 1e-8),
-    (-1e-9, 1e-9),
-    (-1e-8, 1e-8),
-    (-1e-9, 1e-9),
-]
 
 
 def plot_histograms(diff_matrices, percentages, title, filename):
@@ -96,7 +159,7 @@ def plot_histograms(diff_matrices, percentages, title, filename):
     fig.subplots_adjust(hspace=0.5, wspace=0.5, top=0.9)
     for j, percentage in enumerate(percentages):
         axes[0, j].annotate(
-            f"{percentage}% matrices",
+            f"{percentage}% macierzy",
             xy=(0.5, 1.1),
             xycoords="axes fraction",
             ha="center",
@@ -105,7 +168,7 @@ def plot_histograms(diff_matrices, percentages, title, filename):
             weight="bold",
         )
 
-    for i, vector in enumerate(wektory2D):
+    for i, vector in enumerate(WEKTORY2D):
         for j, diff_matrix in enumerate(diff_matrices):
             matrix = diff_matrix[:, :, i]
             cleaned_matrix = matrix[~np.isnan(matrix)]
@@ -134,7 +197,9 @@ def plot_histograms(diff_matrices, percentages, title, filename):
 
 if __name__ == "__main__":
     reference_matrices = generate_reference_matrix()
-    plot_matricies(reference_matrices, "Reference matrix", "reference_matrix.pdf")
+    plot_matricies(
+        reference_matrices, "Macierz referencyjna", f"reference_matrix_{trajectory}.pdf"
+    )
 
     diff_matrices = []
     percentages = []
@@ -152,8 +217,8 @@ if __name__ == "__main__":
         chunk_matrices = chunk_matrices / sum_chunk_matrices
         plot_matricies(
             chunk_matrices,
-            f"{used_matrices_percentage}% matrices summed up",
-            f"chunk_matrix_{i}_{TOTAL_MATRICES}.pdf",
+            f"{used_matrices_percentage}% zsumowanych macierzy",
+            f"chunk_matrix_{i}_{TOTAL_MATRICES}_{trajectory}.pdf",
         )
 
         diff_matrix = reference_matrices - chunk_matrices
@@ -162,8 +227,8 @@ if __name__ == "__main__":
     plot_histograms(
         diff_matrices,
         percentages,
-        "Histograms of Differences",
-        "combined_histograms.pdf",
+        "Histogramy różnic",
+        f"combined_histograms_{trajectory}.pdf",
     )
 
     # plt.show()
