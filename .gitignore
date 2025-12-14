@@ -1,4 +1,5 @@
 *.npy
 __pycache__
 *.zip
+data/
 notatki.md
