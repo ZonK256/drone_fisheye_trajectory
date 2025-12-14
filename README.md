@@ -8,7 +8,8 @@ Projekt do generowania trajektorii dronów z wykorzystaniem obrazów szerokokąt
 
 - Generowanie trajektorii dronów
 - Dobór parametrów symulacji i rozdzielczości obrazu wyjściowego
-- 
+- Obsługa różnych typów trajektorii (liniowa, kręta, rozproszona, okrężna)
+- Tryb testowy z wizualizacją trajektorii na wykresie
 
 ## Instalacja
 
