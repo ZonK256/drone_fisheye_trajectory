@@ -11,6 +11,33 @@ Projekt do generowania trajektorii dronów z wykorzystaniem obrazów szerokokąt
 - Obsługa różnych typów trajektorii (liniowa, kręta, rozproszona, okrężna)
 - Tryb testowy z wizualizacją trajektorii na wykresie
 
+## Działanie
+Skrypt `fisheye.py` generuje trajektorie dronów i konwertuje ich pozycje na współrzędne obrazu szerokokątnego. Użytkownik może określić liczbę trajektorii, typ trajektorii oraz dodatkowe ziarno dla generatora liczb losowych. 
+
+W trybie testowym trajektorie są wizualizowane na wykresie.
+![Wizualizacja przykładowych trajektorii](docs/trajectory_example.gif)
+
+Obsługiwane typy trajektorii to:
+- `linear` - proste trajektorie
+![Przykładowe trajektorie liniowe](docs/linear.png)
+
+- `squiggle` - trajektorie krzywoliniowe
+![Przykładowe trajektorie krzywoliniowe](docs/squiggle.png)
+
+- `scatter` - trajektorie rozproszone
+![Przykładowe trajektorie rozproszone](docs/scatter.png)
+
+- `circular` - trajektorie okrężne
+![Przykładowe trajektorie okrężne](docs/circular.png)
+
+Wyniki symulacji są zapisywane w formacie NumPy `.npy`, gdzie każdy wektor ruchu reprezentowany jest jako macierz o wymiarach `(Rpix, Rpix)`, gdzie `Rpix` to rozdzielczość obrazu wyjściowego określona w pliku `fisheye.py`.
+
+Aby macierze wyjściowe mogły być interpretowane jako macierze Markowa, muszą być znormalizowane, tak aby suma wszystkich elementów macierzy wynosiła 1. W przypadku użycia wielu instancji symulacji, przed normalizacją należy zsumować macierze z wszystkich instancji.
+
+Wynik znormalizowanych macierzy może wyglądać następująco:
+![Przykładowa znormalizowana macierz wyjściowa](docs/output_matrix_example.gif)
+
+
 ## Instalacja
 
 ```bash
@@ -23,6 +50,7 @@ pip install -r requirements.txt
 
 python3 fisheye.py [-h] [--max_trajectories MAX_TRAJECTORIES] [--additional_seed ADDITIONAL_SEED] [--trajectory {linear,squiggle,scatter,circular}] [--test_mode]
 
+```
 Opcje:
     -h, --help            pokaż tę wiadomość pomocy i wyjdź
     --max_trajectories MAX_TRAJECTORIES
@@ -32,6 +60,7 @@ Opcje:
     --trajectory {linear,squiggle,scatter,circular}
                                                 Typ trajektorii do symulacji (domyślnie: linear)
     --test_mode           Włącz tryb testowy z prezentacją trajektorii na wykresie (domyślnie: False)
+```
 
 ## Dodatki
 
